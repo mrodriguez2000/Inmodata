@@ -1,2 +1,25 @@
-FROM python:alpine
+# IMAGEN BASE DE PYTHON
+FROM python:3.12-slim
 
+# DEFINIR DIRECTORIO DE TRABAJO
+WORKDIR /app
+
+# EVITAR ARCHIVOS .pyc Y PERMITIR LOGS INMEDIATOS
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# COPIAR DEPENDENCIAS
+COPY requirements.txt .
+
+# INSTALAR LIBRERIAS DE PYTHON
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+# INSTALAR CHROMIUM Y SUS DEPENDENCIAS
+RUN python -m playwright install --with-deps chromium
+
+# COPIAR CODIGO DEL PROYECTO
+COPY . .
+
+# EJECUTAR EL PROCESO PRINCIPAL
+CMD ["python", "main.py"]
