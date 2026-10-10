@@ -15,12 +15,6 @@ def ejecutar_proceso():
 
     datos = scraping()
 
-    # VALIDAR RESULTADO DEL SCRAPING
-    if not datos or not any(datos):
-        raise ValueError(
-            "El scraping no devolvió información de apartamentos."
-        )
-
     # DEFINIR NOMBRES DE COLUMNAS
     columnas = [
         "ID_Apartamento",
