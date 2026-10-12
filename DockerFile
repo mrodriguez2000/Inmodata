@@ -1,3 +1,4 @@
+
 # IMAGEN BASE DE PYTHON
 FROM python:3.12-slim
 
@@ -15,11 +16,14 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
-# INSTALAR CHROMIUM Y SUS DEPENDENCIAS
+# INSTALAR CHROMIUM Y SUS DEPENDENCIAS PARA PLAYWRIGHT
 RUN python -m playwright install --with-deps chromium
 
 # COPIAR CODIGO DEL PROYECTO
 COPY . .
 
-# EJECUTAR EL PROCESO PRINCIPAL
-CMD ["python", "main.py"]
+# EXPONER EL PUERTO UTILIZADO POR FASTAPI
+EXPOSE 8000
+
+# INICIAR LA API CON UVICORN
+CMD ["uvicorn", "Scripts.Archivos.api:app", "--host", "0.0.0.0", "--port", "8000"]

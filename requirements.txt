@@ -16,3 +16,7 @@ azure-keyvault-secrets
 
 # LIBRERIA DE VARIABLES DE ENTORNO
 dotenv
+
+# FLASK PARA API
+fastapi
+uvicorn

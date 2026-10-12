@@ -2,7 +2,7 @@
 from azure.storage.blob import BlobServiceClient
 
 # MODULO DE CREDENCIALES
-from credencials import obtener_credenciales_azure
+from Scripts.Archivos.credencials import obtener_credenciales_azure
 
 # OTRAS LIBRERIAS
 import os
