@@ -22,8 +22,5 @@ RUN python -m playwright install --with-deps chromium
 # COPIAR CODIGO DEL PROYECTO
 COPY . .
 
-# EXPONER EL PUERTO UTILIZADO POR FASTAPI
-EXPOSE 8000
-
-# INICIAR LA API CON UVICORN
-CMD ["uvicorn", "Scripts.Archivos.api:app", "--host", "0.0.0.0", "--port", "8000"]
+# EJECUTAR EL PROCESO DE SCRAPING
+CMD ["python", "main.py"]

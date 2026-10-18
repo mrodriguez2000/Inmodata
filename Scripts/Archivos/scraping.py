@@ -114,7 +114,7 @@ def scraping():
                 try:
                     url_apartamento_page.goto(
                         urls_apartamento,
-                        timeout=60000,
+                        timeout=90000,
                         wait_until="domcontentloaded"
                     )
                 except Exception as e:

@@ -1,6 +1,6 @@
 # MODULO DE SCRAPING
-from Scripts.Archivos.scraping import scraping
-from Scripts.Archivos.azure_blob_storage import subir_datos_a_azure_blob_storage
+from scraping import scraping
+from azure_blob_storage import subir_datos_a_azure_blob_storage
 
 # OTRAS LIBRERIAS
 import pandas as pd
