@@ -10,3 +10,4 @@ gcloud
 
 # LIBRERIA DE VARIABLES DE ENTORNO
 python-dotenv
+load_dotenv

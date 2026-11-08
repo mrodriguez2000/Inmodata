@@ -1,12 +1,12 @@
-
 # LIBRERIA PARA AUTENTICACION Y CONEXION A GOOGLE CLOUD STORAGE
 from google.cloud import storage
-import dotenv
+from dotenv import load_dotenv
 import pandas as pd
 from pathlib import Path
 
-# OBTENER RUTA DEL ARCHIVO .ENV
+# CARGAR VARIABLES DE ENTORNO
 RUTA_ENV = Path(__file__).resolve().parent / ".env"
+load_dotenv(RUTA_ENV)
 
 
 # DEFINIR FUNCIÓN QUE SUBA ARCHIVOS CSV A GOOGLE CLOUD STORAGE
@@ -31,12 +31,12 @@ def subir_datos_a_google_cloud_storage(dataframe, nombre_archivo_remoto):
 
         # CREAR CLIENTE DE GOOGLE CLOUD STORAGE
         storage_client = storage.Client(
-            project=dotenv.get_key(str(RUTA_ENV), "PROJECT_NAME")
+            project=load_dotenv.get_key(str(RUTA_ENV), "PROJECT_NAME")
         )
 
         # OBTENER BUCKET
         bucket = storage_client.bucket(
-            dotenv.get_key(str(RUTA_ENV), "BUCKET_NAME")
+            load_dotenv.get_key(str(RUTA_ENV), "BUCKET_NAME")
         )
 
         # CONVERTIR DATAFRAME A CSV
@@ -71,12 +71,12 @@ def verificar_conexion_google_cloud_storage():
     try:
         # CREAR CLIENTE DE GOOGLE CLOUD STORAGE
         storage_client = storage.Client(
-            project=dotenv.get_key(str(RUTA_ENV), "PROJECT_NAME")
+            project=load_dotenv.get_key(str(RUTA_ENV), "PROJECT_NAME")
         )
 
         # OBTENER BUCKET
         bucket = storage_client.bucket(
-            dotenv.get_key(str(RUTA_ENV), "BUCKET_NAME")
+            load_dotenv.get_key(str(RUTA_ENV), "BUCKET_NAME")
         )
 
         # VERIFICAR EXISTENCIA DEL BUCKET
