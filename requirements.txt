@@ -2,17 +2,11 @@
 playwright      ==      1.55.0
 pandas          ==      2.3.2
 openpyxl        ==      3.1.5
-sqlalchemy      ==      2.0.54 
-pyodbc          ==      5.3.0
 
 # BLOB STORAGE DE AZURE
-azure-storage-blob
-
-# IDETITY DE AZURE
-azure-identity
-
-# KEY VAUTL DE AZURE
-azure-keyvault-secrets
+google-cloud-storage
+google-cloud-bigquery
+gcloud
 
 # LIBRERIA DE VARIABLES DE ENTORNO
-dotenv
+python-dotenv

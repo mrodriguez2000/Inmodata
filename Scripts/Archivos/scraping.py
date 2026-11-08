@@ -177,7 +177,7 @@ def scraping():
                         urls_apartamento = urljoin(url, enlace)
 
                         # OBTENEMOS EL ID DEL APARTAMENTO
-                        id_actual = urls_apartamento.rstrip("/").split("/")[-1]
+                        id_actual = urls_apartamento.rstrip("/").split("/")[-2]
 
                         # SE PROCEDE A ABRIR LA URL DEL APARTAMENTO
                         url_apartamento_page = context.new_page()

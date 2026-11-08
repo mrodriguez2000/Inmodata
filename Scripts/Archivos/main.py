@@ -1,11 +1,13 @@
 # MODULO DE SCRAPING
 from scraping import scraping
-from azure_blob_storage import subir_datos_a_azure_blob_storage
+
+# MODULO DE GOOGLE CLOUD STORAGE (DONDE SE SUBEN LOS ARCHIVOS CSV A GCS)
+from google_cloud_storage import subir_datos_a_google_cloud_storage
 
 # OTRAS LIBRERIAS
 import pandas as pd
 
-
+# FUNCIÓN PARA CORRER LOS PROCESOS DE SCRAPING Y SUBIDA A GCS
 def ejecutar_proceso():
 
     # EJECUTAR SCRAPING
@@ -59,8 +61,22 @@ def ejecutar_proceso():
         f"Se obtuvieron {len(df)} apartamentos."
     )
 
-    # SUBIR DATOS A AZURE BLOB STORAGE
-    nombre_archivo = subir_datos_a_azure_blob_storage(df)
+    # DEFINIR NOMBRE DEL ARCHIVO
+    nombre_archivo = (
+        f"apartamentos_habi_"
+        f"{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    )
+
+    # SUBIR DATOS A GOOGLE CLOUD STORAGE
+    nombre_archivo = subir_datos_a_google_cloud_storage(
+        df,
+        nombre_archivo
+    )
+
+    if nombre_archivo is None:
+        raise RuntimeError(
+            "No fue posible almacenar el archivo en Google Cloud Storage."
+        )
 
     print(
         f"Proceso finalizado. Archivo almacenado: {nombre_archivo}"
@@ -68,6 +84,6 @@ def ejecutar_proceso():
 
     return nombre_archivo
 
-
+# EJECUTAR EL PROCESO SI EL SCRIPT ES EJECUTADO DIRECTAMENTE
 if __name__ == "__main__":
     ejecutar_proceso()
