@@ -1,0 +1,16 @@
+steps:
+  # CONSTRUIR IMAGEN DOCKER
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'southamerica-east1-docker.pkg.dev/inmodata-513923/inmodata-repo/inmodata:latest'
+      - '.'
+
+# PUBLICAR IMAGEN EN ARTIFACT REGISTRY
+images:
+  - 'southamerica-east1-docker.pkg.dev/inmodata-513923/inmodata-repo/inmodata:latest'
+
+# CONFIGURACION DE REGISTROS
+options:
+  logging: CLOUD_LOGGING_ONLY
