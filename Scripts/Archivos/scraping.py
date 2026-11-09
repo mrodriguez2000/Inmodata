@@ -469,10 +469,10 @@ def scraping():
                     # HACEMOS CLICK EN EL BOTON SIGUIENTE
                     try:
 
-                        boton_siguiente.click(timeout=30000)
+                        boton_siguiente.click(timeout=60000)
 
                         # ESPERAMOS A QUE CARGUE LA SIGUIENTE PAGINA
-                        page.wait_for_timeout(2000)
+                        page.wait_for_timeout(3000)
 
                     except Exception as e:
 
