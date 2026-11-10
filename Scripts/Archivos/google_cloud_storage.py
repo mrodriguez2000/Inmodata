@@ -1,12 +1,20 @@
+
 # LIBRERIA PARA AUTENTICACION Y CONEXION A GOOGLE CLOUD STORAGE
 from google.cloud import storage
 from dotenv import load_dotenv
 import pandas as pd
 from pathlib import Path
+import os
+import logging
 
 # CARGAR VARIABLES DE ENTORNO
 RUTA_ENV = Path(__file__).resolve().parent / ".env"
 load_dotenv(RUTA_ENV)
+
+
+# OBTENER VARIABLES DE ENTORNO
+PROJECT_NAME = os.getenv("PROJECT_NAME")
+BUCKET_NAME = os.getenv("BUCKET_NAME")
 
 
 # DEFINIR FUNCIÓN QUE SUBA ARCHIVOS CSV A GOOGLE CLOUD STORAGE
@@ -29,20 +37,21 @@ def subir_datos_a_google_cloud_storage(dataframe, nombre_archivo_remoto):
         if dataframe.empty:
             raise ValueError("No existen registros para subir.")
 
+        # VALIDAR VARIABLES DE ENTORNO
+        if not PROJECT_NAME or not BUCKET_NAME:
+            raise ValueError(
+                "No se encontraron PROJECT_NAME o BUCKET_NAME."
+            )
+
         # CREAR CLIENTE DE GOOGLE CLOUD STORAGE
-        storage_client = storage.Client(
-            project=load_dotenv.get_key(str(RUTA_ENV), "PROJECT_NAME")
-        )
+        storage_client = storage.Client(project=PROJECT_NAME)
 
         # OBTENER BUCKET
-        bucket = storage_client.bucket(
-            load_dotenv.get_key(str(RUTA_ENV), "BUCKET_NAME")
-        )
+        bucket = storage_client.bucket(BUCKET_NAME)
 
         # CONVERTIR DATAFRAME A CSV
         archivo_csv = dataframe.to_csv(
             index=False,
-            # encoding="utf-8",
             sep="|"
         )
 
@@ -60,8 +69,10 @@ def subir_datos_a_google_cloud_storage(dataframe, nombre_archivo_remoto):
 
         return nombre_archivo_remoto
 
-    except Exception as e:
-        print(f"Error al subir el archivo: {e}")
+    except Exception:
+        logging.exception(
+            "Error al subir el archivo a Google Cloud Storage."
+        )
         return None
 
 
@@ -69,15 +80,17 @@ def subir_datos_a_google_cloud_storage(dataframe, nombre_archivo_remoto):
 def verificar_conexion_google_cloud_storage():
 
     try:
+        # VALIDAR VARIABLES DE ENTORNO
+        if not PROJECT_NAME or not BUCKET_NAME:
+            raise ValueError(
+                "No se encontraron PROJECT_NAME o BUCKET_NAME."
+            )
+
         # CREAR CLIENTE DE GOOGLE CLOUD STORAGE
-        storage_client = storage.Client(
-            project=load_dotenv.get_key(str(RUTA_ENV), "PROJECT_NAME")
-        )
+        storage_client = storage.Client(project=PROJECT_NAME)
 
         # OBTENER BUCKET
-        bucket = storage_client.bucket(
-            load_dotenv.get_key(str(RUTA_ENV), "BUCKET_NAME")
-        )
+        bucket = storage_client.bucket(BUCKET_NAME)
 
         # VERIFICAR EXISTENCIA DEL BUCKET
         if bucket.exists():
@@ -89,8 +102,8 @@ def verificar_conexion_google_cloud_storage():
             print("No se encontró el bucket.")
             return False
 
-    except Exception as e:
-        print(f"Error de conexión: {e}")
+    except Exception:
+        logging.exception("Error de conexión con Google Cloud Storage.")
         return False
 
 
