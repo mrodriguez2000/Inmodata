@@ -600,7 +600,6 @@ if __name__ == "__main__":
 
 
 
-
 # # LIBRERIA DE PLAYWRIGHT
 # from playwright.sync_api import sync_playwright
 
