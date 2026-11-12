@@ -96,10 +96,6 @@ def scraping():
     apartamentos_procesados = 0
     apartamentos_con_error = 0
 
-    # CONTADOR Y LIMITE DE PAGINAS PARA PRUEBAS
-    paginas_procesadas = 0
-    limite_paginas = 5
-
     # INICIAMOS PLAYWRIGHT
     with sync_playwright() as p:
 
@@ -146,10 +142,6 @@ def scraping():
 
                 # ACCEDEMOS A CADA PAGINA DE APARTAMENTOS
                 while True:
-
-                    # AUMENTAMOS EL CONTADOR DE PAGINAS
-                    paginas_procesadas += 1
-                    print("PROCESANDO PAGINA: {}".format(paginas_procesadas))
 
                     # OBTENEMOS LAS TARJETAS DE CADA APARTAMENTO
                     apartamentos = page.locator(
@@ -523,11 +515,6 @@ def scraping():
                                 print("ADVERTENCIA: NO SE PUDO CERRAR LA PESTAÑA.")
                                 print(repr(e))
 
-                    # VERIFICAMOS SI SE ALCANZO EL LIMITE DE PAGINAS
-                    if paginas_procesadas >= limite_paginas:
-                        print("LIMITE DE PAGINAS ALCANZADO: {}".format(limite_paginas))
-                        break
-
                     # OBTENEMOS EL BOTON PARA PASAR A LA SIGUIENTE PAGINA
                     boton_siguiente = page.locator(
                         'button[data-testid="btn-after"]'
@@ -610,7 +597,6 @@ def scraping():
     # RESUMEN FINAL DEL PROCESO
     print("=========================================================")
     print("RESUMEN DEL SCRAPING DE HABI")
-    print("PAGINAS PROCESADAS: {}".format(paginas_procesadas))
     print("APARTAMENTOS PROCESADOS: {}".format(apartamentos_procesados))
     print("APARTAMENTOS CON ERROR: {}".format(apartamentos_con_error))
     print("TOTAL DE REGISTROS OBTENIDOS: {}".format(len(id_apartamento)))

@@ -49,18 +49,21 @@ def subir_datos_a_google_cloud_storage(dataframe, nombre_archivo_remoto):
         # OBTENER BUCKET
         bucket = storage_client.bucket(BUCKET_NAME)
 
-        # CONVERTIR DATAFRAME A CSV
+        # CONVERTIR DATAFRAME A CSV CON CODIFICACION UTF-8
         archivo_csv = dataframe.to_csv(
             index=False,
             sep="|"
         )
+
+        # CODIFICAR EL ARCHIVO EN UTF-8 CON BOM
+        archivo_csv = archivo_csv.encode("utf-8-sig")
 
         # SUBIR ARCHIVO
         blob = bucket.blob(nombre_archivo_remoto)
 
         blob.upload_from_string(
             archivo_csv,
-            content_type="text/csv"
+            content_type="text/csv; charset=utf-8"
         )
 
         print(
