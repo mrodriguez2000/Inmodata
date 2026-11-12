@@ -10,28 +10,59 @@ import pandas as pd
 # IMPORTAR LIBRERIA DE TIEMPO
 import datetime
 
+# LIBRERIA PARA NORMALIZAR TEXTOS
+import unicodedata
+
+
+# FUNCION PARA NORMALIZAR LOS TITULOS DE LOS DETALLES
+def normalizar_texto(texto):
+
+    texto = unicodedata.normalize("NFD", texto.strip().lower())
+    return "".join(caracter for caracter in texto if unicodedata.category(caracter) != "Mn")
 
 # FUNCION PARA OBTENER LOS DATOS DE CADA APARTADO DEL APARTAMENTO
 def obtener_datos_apartamento(pagina, titulo_apartamento):
 
-    # SE OBTIENE EL DETALLE DE CADA APARTAMENTO
-    detalle = pagina.locator(
-        "div.detail-item"
-    ).filter(
-        has=pagina.locator(
-            "p.item-title",
-            has_text=titulo_apartamento
-        )
-    )
+    # NORMALIZAMOS EL TITULO PARA COMPARAR CON O SIN TILDES
+    titulo_buscado = normalizar_texto(titulo_apartamento)
+
+    # REALIZAMOS REINTENTOS SI EL DETALLE TODAVIA NO HA CARGADO
+    for intento in range(3):
+
+        # SE OBTIENEN LOS DETALLES DEL APARTAMENTO
+        detalles = pagina.locator("div.detail-item")
+
+        for i in range(detalles.count()):
+
+            detalle = detalles.nth(i)
+            titulo = detalle.locator("p.item-title")
+
+            if titulo.count() == 0:
+                continue
+
+            try:
+                texto_titulo = normalizar_texto(titulo.first.inner_text(timeout=3000))
+
+                if texto_titulo != titulo_buscado:
+                    continue
+
+                descripcion = detalle.locator("p.item-description")
+
+                if descripcion.count() > 0:
+                    valor = descripcion.first.inner_text(timeout=3000).strip()
+
+                    if valor:
+                        return valor
+
+            except Exception:
+                continue
+
+        # ESPERAMOS ANTES DE REINTENTAR LA EXTRACCION
+        if intento < 2:
+            pagina.wait_for_timeout(800)
 
     # SI NO SE ENCUENTRA EL DATO SE RETORNA NONE
-    if detalle.count() == 0:
-        return None
-
-    # SE OBTIENE EL TEXTO DEL DETALLE DE CADA APARTAMENTO
-    return detalle.first.locator(
-        "p.item-description"
-    ).inner_text().strip()
+    return None
 
 
 # FUNCION PRINCIPAL QUE VA A CONTENER TODO EL SCRAPING
@@ -64,6 +95,10 @@ def scraping():
     # CONTADORES PARA EL SEGUIMIENTO DEL PROCESO
     apartamentos_procesados = 0
     apartamentos_con_error = 0
+
+    # CONTADOR Y LIMITE DE PAGINAS PARA PRUEBAS
+    paginas_procesadas = 0
+    limite_paginas = 5
 
     # INICIAMOS PLAYWRIGHT
     with sync_playwright() as p:
@@ -111,6 +146,10 @@ def scraping():
 
                 # ACCEDEMOS A CADA PAGINA DE APARTAMENTOS
                 while True:
+
+                    # AUMENTAMOS EL CONTADOR DE PAGINAS
+                    paginas_procesadas += 1
+                    print("PROCESANDO PAGINA: {}".format(paginas_procesadas))
 
                     # OBTENEMOS LAS TARJETAS DE CADA APARTAMENTO
                     apartamentos = page.locator(
@@ -199,12 +238,16 @@ def scraping():
                                     "La pestaña del apartamento se cerró."
                                 )
 
-                            # HACER SCROLL HACIA ABAJO PARA CARGAR INFORMACION
-                            altura_anterior = 0
+                            # ESPERAMOS A QUE APAREZCA EL CONTENIDO PRINCIPAL
+                            url_apartamento_page.locator(
+                                "h1.header-title"
+                            ).first.wait_for(state="visible", timeout=20000)
+
+                            # HACER SCROLL PROGRESIVO PARA CARGAR INFORMACION
                             veces_sin_cambio = 0
                             intentos = 0
 
-                            while veces_sin_cambio < 2 and intentos < 20:
+                            while veces_sin_cambio < 3 and intentos < 25:
 
                                 # VERIFICAMOS QUE LA PESTAÑA SIGA ABIERTA
                                 if url_apartamento_page.is_closed():
@@ -212,35 +255,45 @@ def scraping():
                                         "La pestaña se cerró durante el scroll."
                                     )
 
-                                # OBTENEMOS LA ALTURA ACTUAL DE LA PAGINA
-                                altura_actual = url_apartamento_page.evaluate(
-                                    "document.body.scrollHeight"
+                                # OBTENEMOS LA POSICION ACTUAL Y LA ALTURA TOTAL
+                                posicion_anterior = url_apartamento_page.evaluate(
+                                    "window.scrollY"
+                                )
+                                altura_anterior = url_apartamento_page.evaluate(
+                                    "document.documentElement.scrollHeight"
                                 )
 
-                                # HACEMOS SCROLL HACIA ABAJO
+                                # HACEMOS SCROLL POR TRAMOS EN LUGAR DE SALTAR AL FINAL
                                 url_apartamento_page.evaluate(
-                                    "window.scrollTo(0, document.body.scrollHeight)"
+                                    "window.scrollBy(0, Math.max(window.innerHeight * 0.8, 400))"
                                 )
 
-                                # SE AÑADE UN TIEMPO DE ESPERA PARA CARGAR INFORMACION
-                                url_apartamento_page.wait_for_timeout(1000)
+                                # DAMOS TIEMPO A LOS ELEMENTOS DINAMICOS
+                                url_apartamento_page.wait_for_timeout(700)
 
-                                # OBTENEMOS NUEVAMENTE LA ALTURA DE LA PAGINA
+                                # VERIFICAMOS SI CAMBIO LA POSICION O LA ALTURA
+                                posicion_actual = url_apartamento_page.evaluate(
+                                    "window.scrollY"
+                                )
                                 nueva_altura = url_apartamento_page.evaluate(
-                                    "document.body.scrollHeight"
+                                    "document.documentElement.scrollHeight"
                                 )
 
-                                # VERIFICAMOS SI LA PAGINA SIGUE AUMENTANDO
-                                if nueva_altura == altura_anterior:
+                                if (posicion_actual == posicion_anterior and
+                                        nueva_altura == altura_anterior):
                                     veces_sin_cambio += 1
                                 else:
                                     veces_sin_cambio = 0
 
-                                # GUARDAMOS LA NUEVA ALTURA DE LA PAGINA
-                                altura_anterior = nueva_altura
-
-                                # AUMENTAMOS EL NUMERO DE INTENTOS
                                 intentos += 1
+
+                            # ESPERAMOS A QUE APAREZCAN LOS DETALLES SI EXISTEN
+                            try:
+                                url_apartamento_page.locator(
+                                    "div.detail-item"
+                                ).first.wait_for(state="visible", timeout=10000)
+                            except Exception:
+                                print("ADVERTENCIA: NO SE VISUALIZARON LOS DETALLES DEL APARTAMENTO.")
 
                             # SE OBTIENEN LOS DATOS DEL APARTAMENTO
 
@@ -372,6 +425,27 @@ def scraping():
                                 "%Y-%m-%d %H:%M:%S"
                             )
 
+                            # VALIDAMOS LOS CAMPOS IMPORTANTES DE LA EXTRACCION
+                            campos_obligatorios = {
+                                "NOMBRE": apartamento,
+                                "DIRECCION": direccion,
+                                "CIUDAD": ciudad,
+                                "PRECIO": precio,
+                                "AREA": area,
+                                "HABITACIONES": habitaciones,
+                                "BAÑOS": banios
+                            }
+
+                            campos_nulos = [
+                                campo for campo, valor in campos_obligatorios.items()
+                                if valor is None or valor == ""
+                            ]
+
+                            if campos_nulos:
+                                print("ADVERTENCIA: CAMPOS SIN INFORMACION EN ID {}: {}".format(
+                                    id_actual, ", ".join(campos_nulos)
+                                ))
+
                             # MENSAJES DE IMPRESION DE LOS DATOS OBTENIDOS
                             print("---------------------------------------------------------")
                             print("ID DE APARTAMENTO: {}".format(id_actual))
@@ -449,6 +523,11 @@ def scraping():
                                 print("ADVERTENCIA: NO SE PUDO CERRAR LA PESTAÑA.")
                                 print(repr(e))
 
+                    # VERIFICAMOS SI SE ALCANZO EL LIMITE DE PAGINAS
+                    if paginas_procesadas >= limite_paginas:
+                        print("LIMITE DE PAGINAS ALCANZADO: {}".format(limite_paginas))
+                        break
+
                     # OBTENEMOS EL BOTON PARA PASAR A LA SIGUIENTE PAGINA
                     boton_siguiente = page.locator(
                         'button[data-testid="btn-after"]'
@@ -465,13 +544,27 @@ def scraping():
                     # MENSAJE PARA SABER EN QUE PAGINA ESTAMOS
                     print("HACIENDO CLICK EN SIGUIENTE...")
 
+                    # GUARDAMOS EL ENLACE DE LA PRIMERA TARJETA ACTUAL
+                    primer_enlace_anterior = page.locator(
+                        "ul.properties-cards li.card a.card-details"
+                    ).first.get_attribute("href")
+
                     # HACEMOS CLICK EN EL BOTON SIGUIENTE
                     try:
 
                         boton_siguiente.click(timeout=60000)
 
-                        # ESPERAMOS A QUE CARGUE LA SIGUIENTE PAGINA
-                        page.wait_for_timeout(3000)
+                        # ESPERAMOS A QUE CAMBIE LA PRIMERA TARJETA
+                        page.wait_for_function(
+                            """(anterior) => {
+                                const enlace = document.querySelector(
+                                    'ul.properties-cards li.card a.card-details'
+                                );
+                                return enlace && enlace.getAttribute('href') !== anterior;
+                            }""",
+                            arg=primer_enlace_anterior,
+                            timeout=20000
+                        )
 
                     except Exception as e:
 
@@ -517,6 +610,7 @@ def scraping():
     # RESUMEN FINAL DEL PROCESO
     print("=========================================================")
     print("RESUMEN DEL SCRAPING DE HABI")
+    print("PAGINAS PROCESADAS: {}".format(paginas_procesadas))
     print("APARTAMENTOS PROCESADOS: {}".format(apartamentos_procesados))
     print("APARTAMENTOS CON ERROR: {}".format(apartamentos_con_error))
     print("TOTAL DE REGISTROS OBTENIDOS: {}".format(len(id_apartamento)))
