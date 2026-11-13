@@ -10,6 +10,9 @@ import pandas as pd
 # IMPORTAR LIBRERIA DE TIEMPO
 import datetime
 
+# LIBRERIA PARA MEDIR EL TIEMPO DE EJECUCION
+import time
+
 # LIBRERIA PARA NORMALIZAR TEXTOS
 import unicodedata
 
@@ -96,6 +99,10 @@ def scraping():
     apartamentos_procesados = 0
     apartamentos_con_error = 0
 
+    # CONTADOR Y LIMITE DE PAGINAS PARA PRUEBAS
+    inicio_scraping = time.perf_counter()
+    paginas_procesadas = 0
+
     # INICIAMOS PLAYWRIGHT
     with sync_playwright() as p:
 
@@ -143,6 +150,10 @@ def scraping():
                 # ACCEDEMOS A CADA PAGINA DE APARTAMENTOS
                 while True:
 
+                    # AUMENTAMOS EL CONTADOR DE PAGINAS
+                    paginas_procesadas += 1
+                    print("PROCESANDO PAGINA: {}".format(paginas_procesadas))
+
                     # OBTENEMOS LAS TARJETAS DE CADA APARTAMENTO
                     apartamentos = page.locator(
                         "ul.properties-cards li.card"
@@ -164,6 +175,9 @@ def scraping():
 
                     # ACCEDEMOS A CADA APARTAMENTO Y OBTENEMOS LA INFORMACION
                     for i in range(cantidad_apartamentos):
+
+                        # INICIAMOS EL CONTADOR DE TIEMPO DEL APARTAMENTO
+                        inicio_apartamento = time.perf_counter()
 
                         # OBTENEMOS LA TARJETA DEL APARTAMENTO
                         apartamento_card = apartamentos.nth(i)
@@ -515,6 +529,15 @@ def scraping():
                                 print("ADVERTENCIA: NO SE PUDO CERRAR LA PESTAÑA.")
                                 print(repr(e))
 
+                            # CALCULAMOS EL TIEMPO TOTAL DEL APARTAMENTO
+                            tiempo_apartamento = time.perf_counter() - inicio_apartamento
+                            print(
+                                "TIEMPO DE PROCESAMIENTO DEL APARTAMENTO {}: {:.2f} SEGUNDOS".format(
+                                    id_actual, tiempo_apartamento
+                                ),
+                                flush=True
+                            )
+
                     # OBTENEMOS EL BOTON PARA PASAR A LA SIGUIENTE PAGINA
                     boton_siguiente = page.locator(
                         'button[data-testid="btn-after"]'
@@ -594,12 +617,17 @@ def scraping():
                 print("ADVERTENCIA AL CERRAR EL NAVEGADOR:")
                 print(repr(e))
 
+    # CALCULAMOS EL TIEMPO TOTAL DEL SCRAPING
+    tiempo_total = time.perf_counter() - inicio_scraping
+
     # RESUMEN FINAL DEL PROCESO
     print("=========================================================")
     print("RESUMEN DEL SCRAPING DE HABI")
+    print("PAGINAS PROCESADAS: {}".format(paginas_procesadas))
     print("APARTAMENTOS PROCESADOS: {}".format(apartamentos_procesados))
     print("APARTAMENTOS CON ERROR: {}".format(apartamentos_con_error))
     print("TOTAL DE REGISTROS OBTENIDOS: {}".format(len(id_apartamento)))
+    print("TIEMPO TOTAL DEL SCRAPING: {:.2f} MINUTOS".format(tiempo_total / 60))
     print("PROCESO DE SCRAPING FINALIZADO")
     print("=========================================================")
 
